@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mini YouTube - Your Video Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin:0;
+    font-family: 'Roboto', sans-serif;
+    background: #181818;
+    color: #f1f1f1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    background: #202020;
+    padding: 15px 20px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FF0000;
+    user-select: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  }
+  main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .video-list {
+    width: 320px;
+    background: #121212;
+    overflow-y: auto;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+  }
+  .search-bar {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+  }
+  .search-bar input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    background: #2a2a2a;
+    color: #eee;
+  }
+  .upload-video {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+  }
+  .upload-video label {
+    cursor: pointer;
+    font-size: 1rem;
+    color: #8ab4f8;
+    text-decoration: underline;
+  }
+  .upload-video input[type="file"] {
+    display: none;
+  }
+  .videos {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .video-item {
+    display: flex;
+    padding: 10px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+  }
+  .video-item:hover {
+    background: #282828;
+  }
+  .video-thumb {
+    width: 120px;
+    height: 68px;
+    background: #000;
+    flex-shrink: 0;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(0,0,0,0.7);
+  }
+  .video-thumb video,
+  .video-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .video-info {
+    margin-left: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .video-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #fff;
+  }
+  .video-description {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-top: 4px;
+  }
+  .player-section {
+    flex: 1;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+  }
+  .player-video {
+    flex: 1;
+    background: #000;
+    position: relative;
+  }
+  video#main-video {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    outline: none;
+  }
+  .player-info {
+    padding: 12px 16px;
+    background: #121212;
+  }
+  .player-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .player-description {
+    font-size: 1rem;
+    color: #bbb;
+  }
+  @media (max-width: 700px) {
+    main {
+      flex-direction: column;
+    }
+    .video-list {
+      width: 100%;
+      height: 180px;
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      border-right: none;
+      border-bottom: 1px solid #333;
+    }
+    .videos {
+      flex-direction: row;
+      display: flex;
+      overflow-x: auto;
+    }
+    .video-item {
+      flex: 0 0 160px;
+      flex-direction: column;
+      padding: 6px;
+      border-bottom: none;
+      border-right: 1px solid #333;
+    }
+    .video-thumb {
+      width: 100%;
+      height: 90px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.7);
+    }
+    .video-info {
+      margin-left: 0;
+      margin-top: 6px;
+      justify-content: flex-start;
+    }
+    .player-info {
+      padding: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+<header>Farrel tube</header>
+<main>
+  <section class="video-list" aria-label="Video list">
+    <div class="search-bar">
+      <input type="search" id="searchInput" placeholder="Search videos..." aria-label="Search videos"/>
+    </div>
+    <div class="upload-video">
+      <label for="uploadInput" tabindex="0">Upload Video</label>
+      <input type="file" id="uploadInput" accept="video/*" />
+    </div>
+    <div class="videos" id="videoList" role="list" aria-live="polite">
+      <!-- Video thumbnails will be inserted here -->
+    </div>
+  </section>
+  <section class="player-section" aria-label="Video player">
+    <div class="player-video">
+      <video id="main-video" controls preload="metadata" poster="">
+        <source src="" type="video/mp4" />
+        Sorry, your browser does not support the video tag.
+      </video>
+    </div>
+    <div class="player-info">
+      <h2 class="player-title" id="playerTitle">Select a video to play</h2>
+      <p class="player-description" id="playerDescription"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function() {
+    const videos = [
+      {
+        id: 'vid1',
+        title: 'Big Buck Bunny',
+        description: 'An open-source short film about a big bunny.',
+        src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        thumbnail: 'https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217',
+      },
+      {
+        id: 'vid2',
+        title: 'Sintel',
+        description: 'A short fantasy animation created by Blender Institute.',
+        src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        thumbnail: 'https://durian.blender.org/wp-content/uploads/2010/03/sintel_postcard_front.jpg',
+      },
+      {
+        id: 'vid3',
+        title: 'Tears of Steel',
+        description: 'Sci-fi short film by Blender Foundation.',
+        src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        thumbnail: 'https://mango.blender.org/wp-content/themes/blender-mango/img/project/episodes/episode_2_stills_3.jpg',
+      },
+      {
+        id: 'vid4',
+        title: 'For Bigger Blazes',
+        description: 'A short demo video from Google.',
+        src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        thumbnail: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg',
+      }
+    ];
+
+    let currentVideos = [...videos];
+
+    const videoListEl = document.getElementById('videoList');
+    const mainVideoEl = document.getElementById('main-video');
+    const playerTitleEl = document.getElementById('playerTitle');
+    const playerDescriptionEl = document.getElementById('playerDescription');
+    const searchInputEl = document.getElementById('searchInput');
+    const uploadInputEl = document.getElementById('uploadInput');
+
+    function createVideoItem(video) {
+      const item = document.createElement('div');
+      item.className = 'video-item';
+      item.setAttribute('role', 'listitem');
+      item.tabIndex = 0;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'video-thumb';
+
+      // Thumbnail image or video poster
+      if(video.thumbnail) {
+        const img = document.createElement('img');
+        img.src = video.thumbnail;
+        img.alt = 'Thumbnail of ' + video.title;
+        thumb.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.style.width = '100%';
+        placeholder.style.height = '100%';
+        placeholder.style.background = '#444';
+        thumb.appendChild(placeholder);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'video-info';
+
+      const title = document.createElement('div');
+      title.className = 'video-title';
+      title.textContent = video.title;
+
+      const desc = document.createElement('div');
+      desc.className = 'video-description';
+      desc.textContent = video.description;
+
+      info.appendChild(title);
+      info.appendChild(desc);
+
+      item.appendChild(thumb);
+      item.appendChild(info);
+
+      item.addEventListener('click', () => {
+        playVideo(video);
+      });
+      // For keyboard accessibility
+      item.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          playVideo(video);
+        }
+      });
+
+      return item;
+    }
+
+    function renderVideoList(list) {
+      videoListEl.innerHTML = '';
+      if(list.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.textContent = 'No videos found';
+        emptyMsg.style.padding = '10px';
+        videoListEl.appendChild(emptyMsg);
+        return;
+      }
+      list.forEach(video => {
+        const videoItem = createVideoItem(video);
+        videoListEl.appendChild(videoItem);
+      });
+    }
+
+    function playVideo(video) {
+      mainVideoEl.pause();
+      mainVideoEl.src = video.src;
+      mainVideoEl.poster = video.thumbnail || '';
+      mainVideoEl.load();
+      mainVideoEl.play().catch(() => {});
+      playerTitleEl.textContent = video.title;
+      playerDescriptionEl.textContent = video.description;
+    }
+
+    function filterVideos(query) {
+      const lowerQuery = query.toLowerCase();
+      currentVideos = videos.concat(uploadedVideos).filter(video => video.title.toLowerCase().includes(lowerQuery) || video.description.toLowerCase().includes(lowerQuery));
+      renderVideoList(currentVideos);
+    }
+
+    // Handle search input
+    searchInputEl.addEventListener('input', () => {
+      filterVideos(searchInputEl.value);
+    });
+
+    // Uploaded videos storage in-memory
+    const uploadedVideos = [];
+
+    uploadInputEl.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      // Only video files
+      if(!file.type.startsWith('video/')) {
+        alert('Please upload a valid video file.');
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      // Create a thumbnail by loading the video and capturing a frame is complex in this context. As a simple solution, use a generic placeholder.
+      const newVideo = {
+        id: 'uploaded-' + Date.now(),
+        title: file.name,
+        description: 'Uploaded video file',
+        src: url,
+        thumbnail: '', // no thumbnail provided for uploaded videos
+      };
+      uploadedVideos.push(newVideo);
+      // Add to all videos
+      currentVideos = currentVideos.concat(newVideo);
+      renderVideoList(currentVideos);
+      playVideo(newVideo);
+      // Reset input so same file can be uploaded again if needed
+      uploadInputEl.value = '';
+    });
+
+    // Initialize
+    renderVideoList(videos);
+    // Auto play first video on load
+    playVideo(videos[0]);
+  })();
+</script>
+</body>
+</html>
+
